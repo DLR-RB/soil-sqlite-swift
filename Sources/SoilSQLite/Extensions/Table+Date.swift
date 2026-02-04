@@ -21,6 +21,36 @@ extension Table {
 
     /**
      Filter a query with a date range on a column.
+     - Parameter timestamp: The timestamp column
+     - Parameter start: The start of the requested interval (exclusive, `nil` indicates beginning of time)
+     - Parameter end: The end of the requested interval (inclusive, `nil` indicates end of time)
+     - Returns: The modified table to use for queries
+     */
+    func filter(_ timestamp: SQLite.Expression<Int>, from start: Date?, to end: Date?) -> Table {
+        guard let end = end?.millisecondsSince1970 else {
+            guard let start = start?.millisecondsSince1970 else {
+                // No interval given, sort ascending
+                return self
+            }
+            // Only start given, sort ascending
+            return filter(timestamp > start)
+        }
+
+        guard let start = start?.millisecondsSince1970 else {
+            // Only end given, sort descending
+            return filter(timestamp <= end)
+        }
+
+        if start < end {
+            // Return ascending
+            return filter(timestamp > start && timestamp <= end)
+        }
+        // Return descending, switch range
+        return filter(timestamp >= end && timestamp < start)
+    }
+
+    /**
+     Filter a query with a date range on a column.
 
      The sort order of the result is:
      - ascending, if `end = nil`
@@ -33,7 +63,7 @@ extension Table {
      - Parameter end: The end of the requested interval (inclusive, `nil` indicates end of time)
      - Returns: The modified table to use for queries
      */
-    func filter(_ timestamp: SQLite.Expression<Int>, from start: Date?, to end: Date?) -> Table {
+    func filterAndOrder(_ timestamp: SQLite.Expression<Int>, from start: Date?, to end: Date?) -> Table {
         guard let end = end?.millisecondsSince1970 else {
             guard let start = start?.millisecondsSince1970 else {
                 // No interval given, sort ascending

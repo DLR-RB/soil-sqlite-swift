@@ -115,7 +115,7 @@ public actor SQLiteStorage {
         let samples = values.samples(for: node.id, from: start, to: end, limit: limitPerNode, delegate: delegate)
 
         // End the recursion if the depth is reached
-        if let depth, depth == 0 {
+        if depth == 0 {
             return .init(samples: samples)
         }
 
@@ -164,6 +164,11 @@ public actor SQLiteStorage {
      */
     private func delete(node: Node, from start: Timestamp?, to end: Timestamp?, depth: Int?) {
         deleteSamples(at: node.id, from: start, to: end)
+
+        // End the recursion if the depth is reached
+        if depth == 0 {
+            return
+        }
 
         // Ensure that all children are available to continue the recursion
         // We continue in a best-effort manner if the fetch failed

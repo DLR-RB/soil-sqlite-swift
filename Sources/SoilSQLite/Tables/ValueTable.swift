@@ -138,7 +138,7 @@ final class ValueTable {
     func samples(for pathId: Int, from start: Date? = nil, to end: Date? = nil, limit: Int? = nil, delegate: SQLiteErrorDelegate?) -> [Sample] {
         let query = table
             .filter(path == pathId)
-            .filter(timestamp, from: start, to: end)
+            .filterAndOrder(timestamp, from: start, to: end)
             .limit(limit)
         let rows: AnySequence<Row>
         do {
