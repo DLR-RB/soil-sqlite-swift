@@ -8,37 +8,36 @@ import SoilSQLite
 struct StorageTests {
 
     @Test("Current value for path")
-    func saveAndGetValues() throws {
-        let db = try Connection(.inMemory)
-        let storage = try SQLiteStorage(database: db)
+    func saveAndGetSamples() async throws {
+        let (storage, delegate) = try await makeStorageAndDelegate()
 
         let pathA = ["a", "b", "c"]
         let now = Date().addingTimeInterval(-0.1)
 
-        storage.receive(.integer(123), for: pathA, at: now)
+        await storage.receive(.integer(123), for: pathA, at: now).wait()
 
-        let storedPathA = storage.currentSample(for: pathA)
+        let storedPathA = await storage.currentSample(for: pathA)
         let sample = try #require(storedPathA)
         #expect(sample.value == .integer(123))
         #expect(sample.timestamp.isVeryClose(to: now))
+        #expect(await delegate.error == nil)
     }
 
     /**
      Check if a sub-tree is correctly returned with all content when individual paths have been set
      */
     @Test("Get sub-tree")
-    func getSubTree() throws {
-        let db = try Connection(.inMemory)
-        let storage = try SQLiteStorage(database: db)
+    func getSubTree() async throws {
+        let (storage, delegate) = try await makeStorageAndDelegate()
 
         let now = Date()
 
-        storage.receive(.integer(123), for: ["a", "b", "c"], at: now)
-        storage.receive(.double(3.14), for: ["a", "b", "d"], at: now)
-        storage.receive(.string("some"), for: ["a", "e"], at: now)
+        await storage.receive(.integer(123), for: ["a", "b", "c"], at: now).wait()
+        await storage.receive(.double(3.14), for: ["a", "b", "d"], at: now).wait()
+        await storage.receive(.string("some"), for: ["a", "e"], at: now).wait()
 
         do {
-            let tree = storage.currentTree(for: ["a"], depth: nil)
+            let tree = await storage.currentTree(for: ["a"], depth: nil)
             #expect(tree.current == nil)
             #expect(tree.children.count == 2)
             let b = try #require(tree.children["b"])
@@ -63,21 +62,21 @@ struct StorageTests {
             #expect(eSample.timestamp.isVeryClose(to: now))
             #expect(e.children.count == 0)
         }
+        #expect(await delegate.error == nil)
     }
 
     @Test("Sub-tree with depth")
-    func subTreeWithDepth() throws {
-        let db = try Connection(.inMemory)
-        let storage = try SQLiteStorage(database: db)
+    func subTreeWithDepth() async throws {
+        let (storage, delegate) = try await makeStorageAndDelegate()
 
         let now = Date()
 
-        storage.receive(.integer(123), for: ["a", "b", "c"], at: now)
-        storage.receive(.double(3.14), for: ["a", "b", "d"], at: now)
-        storage.receive(.string("some"), for: ["a", "e"], at: now)
+        await storage.receive(.integer(123), for: ["a", "b", "c"], at: now).wait()
+        await storage.receive(.double(3.14), for: ["a", "b", "d"], at: now).wait()
+        await storage.receive(.string("some"), for: ["a", "e"], at: now).wait()
 
         do {
-            let tree = storage.currentTree(for: ["a"], depth: 2)
+            let tree = await storage.currentTree(for: ["a"], depth: 2)
             #expect(tree.current == nil)
             #expect(tree.children.count == 2)
             let b = try #require(tree.children["b"])
@@ -104,7 +103,7 @@ struct StorageTests {
         }
 
         do {
-            let tree = storage.currentTree(for: ["a"], depth: 1)
+            let tree = await storage.currentTree(for: ["a"], depth: 1)
             #expect(tree.current == nil)
             #expect(tree.children.count == 2)
             let b = try #require(tree.children["b"])
@@ -119,9 +118,65 @@ struct StorageTests {
         }
 
         do {
-            let tree = storage.currentTree(for: ["a"], depth: 0)
+            let tree = await storage.currentTree(for: ["a"], depth: 0)
             #expect(tree.current == nil)
             #expect(tree.children.count == 0)
         }
+        #expect(await delegate.error == nil)
+    }
+
+    @Test("Insert duplicate")
+    func testInsertDuplicate() async throws {
+        let (storage, delegate) = try await makeStorageAndDelegate()
+
+        let now = Date()
+        let path = ["a", "b", "c"]
+
+        await storage.receive(.integer(123), for: path, at: now).wait()
+
+        do {
+            let samples = await storage.samples(for: path)
+            #expect(samples.count == 1)
+            let sample = try #require(samples.first)
+            #expect(sample.value == .integer(123))
+            #expect(sample.timestamp.isVeryClose(to: now))
+        }
+
+        // Overwrite sample
+        await storage.receive(.integer(42), for: path, at: now).wait()
+
+        do {
+            let samples = await storage.samples(for: path)
+            #expect(samples.count == 1)
+            let sample = try #require(samples.first)
+            #expect(sample.value == .integer(42))
+            #expect(sample.timestamp.isVeryClose(to: now))
+        }
+        #expect(await delegate.error == nil)
+    }
+
+    @Test("Store path")
+    func testStorePath() async throws {
+        let (storage, delegate) = try await makeStorageAndDelegate()
+
+        let now = Date()
+        let path = ["a", "b", "c"]
+
+        await storage.receive(.path(["zz", "abc", "42"]), for: path, at: now).wait()
+
+        try await Task.sleep(for: .seconds(0.1))
+
+        do {
+            let samples = await storage.samples(for: path)
+            try await Task.sleep(for: .seconds(0.1))
+            #expect(await delegate.error == nil)
+            #expect(samples.count == 1)
+            let oSample = await storage.currentSample(for: path)
+            let sample = try #require(oSample)
+            #expect(sample.value == .path(["zz", "abc", "42"]))
+            #expect(sample.timestamp.isVeryClose(to: now))
+        }
+
+        #expect(await delegate.error == nil)
     }
 }

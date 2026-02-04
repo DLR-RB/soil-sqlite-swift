@@ -1,37 +1,14 @@
 
-extension Int {
+extension Optional where Wrapped == Int {
 
     /**
-     Subtract the value and return the result.
-
-     This function is available to simplify optional chaining:
-
-     ```
-     let some: Int? = other?.subtracting(1)
-     ```
-
-     This would otherwise be difficult to write.
-     - Parameter value: The value to subtract.
-     - Returns: The original integer value reduced by `value`.
+     Returns the result of subtracting an `Int` from an optional `Int`.
+     - Parameter lhs: The optional integer on the left-hand side.
+     - Parameter rhs: The integer to subtract from `lhs`.
+     - Returns: The result of `lhs - rhs` if `lhs` is non-nil, otherwise `nil`.
      */
-    func subtracting(_ value: Int) -> Int {
-        self - value
-    }
-
-    /**
-     Add the value and return the result.
-
-     This function is available to simplify optional chaining:
-
-     ```
-     let some: Int? = other?.adding(1)
-     ```
-
-     This would otherwise be difficult to write.
-     - Parameter value: The value to add.
-     - Returns: The original integer value incremented by `value`.
-     */
-    func adding(_ value: Int) -> Int {
-        self + value
+    static func - (lhs: Int?, rhs: Int) -> Int? {
+        guard let lhs else { return nil }
+        return lhs - rhs
     }
 }

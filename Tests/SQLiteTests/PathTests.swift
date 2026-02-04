@@ -7,13 +7,18 @@ import Soil
 @Suite("Paths")
 struct PathTests {
 
+    private func createResolver() throws -> PathResolver {
+        let db = try Connection(.inMemory)
+        let table = try PathTable(database: db)
+        return PathResolver(table: table)
+    }
+
     /**
      Check that the paths are stored in the cache.
      */
     @Test("Caching")
     func testPathCache() throws {
-        let db = try Connection(.inMemory)
-        let resolver = try PathResolver(database: db)
+        let resolver = try createResolver()
 
         let pathA = ["a", "b", "c"]
 
@@ -35,8 +40,7 @@ struct PathTests {
      */
     @Test("Persistence")
     func testDatabaseWrite() throws {
-        let db = try Connection(.inMemory)
-        let resolver = try PathResolver(database: db)
+        let resolver = try createResolver()
 
         let path = ["a", "b", "c"]
         // Getting a path should add the components to the cache
@@ -77,8 +81,7 @@ struct PathTests {
      */
     @Test("Sub-tree")
     func testSubTree() throws {
-        let db = try Connection(.inMemory)
-        let resolver = try PathResolver(database: db)
+        let resolver = try createResolver()
 
         let path = ["a", "b", "c"]
         // Getting a path adds the components to the cache
@@ -88,43 +91,43 @@ struct PathTests {
         do {
             let root = try resolver.fullTree(for: [])
             #expect(root.id == 0) // PathTable.rootId
-            #expect(root.nodes.count == 1)
-            let a = try #require(root.nodes["a"])
+            #expect(root.children.count == 1)
+            let a = try #require(root.children["a"])
             #expect(a.id == 1)
-            #expect(a.nodes.count == 1)
-            let b = try #require(a.nodes["b"])
+            #expect(a.children.count == 1)
+            let b = try #require(a.children["b"])
             #expect(b.id == 2)
-            #expect(b.nodes.count == 1)
-            let c = try #require(b.nodes["c"])
+            #expect(b.children.count == 1)
+            let c = try #require(b.children["c"])
             #expect(c.id == 3)
-            #expect(c.nodes.count == 0)
+            #expect(c.children.count == 0)
         }
 
         do {
             let a = try resolver.fullTree(for: ["a"])
             #expect(a.id == 1)
-            #expect(a.nodes.count == 1)
-            let b = try #require(a.nodes["b"])
+            #expect(a.children.count == 1)
+            let b = try #require(a.children["b"])
             #expect(b.id == 2)
-            #expect(b.nodes.count == 1)
-            let c = try #require(b.nodes["c"])
+            #expect(b.children.count == 1)
+            let c = try #require(b.children["c"])
             #expect(c.id == 3)
-            #expect(c.nodes.count == 0)
+            #expect(c.children.count == 0)
         }
 
         do {
             let b = try resolver.fullTree(for: ["a", "b"])
             #expect(b.id == 2)
-            #expect(b.nodes.count == 1)
-            let c = try #require(b.nodes["c"])
+            #expect(b.children.count == 1)
+            let c = try #require(b.children["c"])
             #expect(c.id == 3)
-            #expect(c.nodes.count == 0)
+            #expect(c.children.count == 0)
         }
 
         do {
             let c = try resolver.fullTree(for: ["a", "b", "c"])
             #expect(c.id == 3)
-            #expect(c.nodes.count == 0)
+            #expect(c.children.count == 0)
         }
     }
 }

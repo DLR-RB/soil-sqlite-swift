@@ -13,7 +13,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        //.package(url: "https://github.com/swiftlang/swift-toolchain-sqlite.git", from: "1.0.7"),
+        .package(url: "https://github.com/swiftlang/swift-toolchain-sqlite.git", from: "1.0.7"),
         .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.15.5", traits: ["SwiftToolchainCSQLite"]),
         .package(url: "https://gitlab.gsoc.dlr.de/gitlab/rb/mit/mcs/luna/soil/soil-core-swift.git", branch: "main"),
     ],

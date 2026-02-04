@@ -27,7 +27,7 @@ extension PathResolver {
     func cachedPathId(for path: Path) -> Int? {
         var node = try! self.node(for: []) // Returns the root node
         for component in path {
-            guard let child = node.nodes[component] else {
+            guard let child = node.children[component] else {
                 // Sub-path not cached yet
                 return nil
             }
@@ -41,6 +41,6 @@ extension PathResolver {
      */
     func clearCache() {
         let root = try! self.node(for: []) // Returns the root node
-        root.nodes.removeAll()
+        root.children.removeAll()
     }
 }

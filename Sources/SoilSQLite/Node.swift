@@ -9,11 +9,16 @@ class Node {
     let id: Int
 
     /// The cached child nodes of this path
-    var nodes: [PathComponent : Node] = [:]
+    var children: [PathComponent : Node] = [:]
 
     /// Indicate if `nodes` contains all stored children
     var hasAllChildrenCached: Bool
 
+    /**
+     Create a new node, indicating if it is fully fetched.
+     - Parameter id: The unique id of the path for the node
+     - Parameter isComplete: Indicate if the node has all children fetched.
+     */
     init(id: Int, isComplete: Bool) {
         self.id = id
         self.hasAllChildrenCached = isComplete

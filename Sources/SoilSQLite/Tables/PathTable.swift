@@ -4,14 +4,14 @@ import Soil
 
 /**
  The SQLite table storing the integer keys for all paths,
- so that values can be efficiently stored in the `current` and `history` tables.
+ so that values can be efficiently stored in the `values` table.
 
  The table contains three columns:
- - The `id` assigns an integer to the path
- - The `component` indicates the name of the current node
- - The `parent` id points to the row of the parent node
+ - The `id` (`INTEGER`) assigns an integer to the path
+ - The `component` (`TEXT`) indicates the name of the current node
+ - The `parent` (`INTEGER`) id points to the row of the parent node
 
- The root node has is not stored in the table, and has an `id` of `0`.
+ The root node is not stored in the table, and has an `id` of `0`.
  Each top-level node will therefore have `parent = 0`,
  allowing the `parent` column to be declared `NOT NULL` (saves a bit of storage).
  SQLite does not allow the `id` column to be set to `0` since it's a `PRIMARY KEY`.
