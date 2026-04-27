@@ -12,7 +12,7 @@ import Soil
 public actor SQLiteStorage {
 
     /// The database connection to retrieve and insert values
-    private let database: Connection
+    private let database: SQLite.Connection
 
     /// The interface to the path table to get integer ids for paths
     private let paths: PathResolver
@@ -29,7 +29,7 @@ public actor SQLiteStorage {
      - Throws: Errors, if the database could not be connected or if the tables could not be created
      */
     public init(filePath: String) throws {
-        let database = try Connection(filePath)
+        let database = try SQLite.Connection(filePath)
         try self.init(database: database)
     }
 
@@ -38,7 +38,7 @@ public actor SQLiteStorage {
      - Parameter database: The database handle
      - Throws: SQLite errors, if the tables could not be created
      */
-    public init(database: Connection) throws {
+    public init(database: SQLite.Connection) throws {
         self.database = database
         let pathTable = try PathTable(database: database)
         self.paths = PathResolver(table: pathTable)
@@ -116,7 +116,7 @@ public actor SQLiteStorage {
 
         // End the recursion if the depth is reached
         if depth == 0 {
-            return .init(samples: samples)
+            return ImmutableSampleTree(samples: samples)
         }
 
         // Ensure that all children are available to continue the recursion
@@ -127,7 +127,7 @@ public actor SQLiteStorage {
         let children: [PathComponent : SampleTree] = node.children.mapValues { child in
             tree(for: child, from: start, to: end, depth: childDepth, limitPerNode: limitPerNode)
         }
-        return .init(samples: samples, children: children)
+        return ImmutableSampleTree(samples: samples, children: children)
     }
 
     // MARK: Delete
@@ -322,7 +322,7 @@ extension SQLiteStorage: Storage {
                 return nil
             }
             return tree(for: node, from: start, to: end, depth: depth, limitPerNode: limitPerNode)
-        } ?? SampleTree() // Return an empty tree if the transaction fails
+        } ?? ImmutableSampleTree() // Return an empty tree if the transaction fails
     }
 
     /**

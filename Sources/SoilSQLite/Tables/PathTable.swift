@@ -20,7 +20,7 @@ import Soil
 final class PathTable {
 
     /// The database connection to retrieve and insert values
-    private let database: Connection
+    private let database: SQLite.Connection
 
     /// The definition of the table
     let table = Table("path")
@@ -58,7 +58,7 @@ final class PathTable {
      - Parameter database: The SQLite connection to use
      - Throws: SQLite errors if the table or index creation fails.
      */
-    init(database: Connection) throws {
+    init(database: SQLite.Connection) throws {
         self.database = database
 
         /*

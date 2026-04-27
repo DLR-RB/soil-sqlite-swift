@@ -33,12 +33,12 @@ struct HistoryTests {
             #expect(all[3].value == .data("126".data(using: .utf8)!))
             #expect(all[4].value == .path(["126"]))
             #expect(all[5].value == .null)
-            #expect(all[0].timestamp.isVeryClose(to: date.advanced(by: 0)))
-            #expect(all[1].timestamp.isVeryClose(to: date.advanced(by: 1)))
-            #expect(all[2].timestamp.isVeryClose(to: date.advanced(by: 2)))
-            #expect(all[3].timestamp.isVeryClose(to: date.advanced(by: 3)))
-            #expect(all[4].timestamp.isVeryClose(to: date.advanced(by: 4)))
-            #expect(all[5].timestamp.isVeryClose(to: date.advanced(by: 5)))
+            #expect(all[0].timestamp?.isVeryClose(to: date.advanced(by: 0)) ?? false)
+            #expect(all[1].timestamp?.isVeryClose(to: date.advanced(by: 1)) ?? false)
+            #expect(all[2].timestamp?.isVeryClose(to: date.advanced(by: 2)) ?? false)
+            #expect(all[3].timestamp?.isVeryClose(to: date.advanced(by: 3)) ?? false)
+            #expect(all[4].timestamp?.isVeryClose(to: date.advanced(by: 4)) ?? false)
+            #expect(all[5].timestamp?.isVeryClose(to: date.advanced(by: 5)) ?? false)
         }
 
         #expect(await delegate.error == nil)
@@ -62,8 +62,8 @@ struct HistoryTests {
             try #require(all.count == 2)
             #expect(all[0].value == .integer(125))
             #expect(all[1].value == .integer(124))
-            #expect(all[0].timestamp.isVeryClose(to: date.advanced(by: 2)))
-            #expect(all[1].timestamp.isVeryClose(to: date.advanced(by: 1)))
+            #expect(all[0].timestamp?.isVeryClose(to: date.advanced(by: 2)) ?? false)
+            #expect(all[1].timestamp?.isVeryClose(to: date.advanced(by: 1)) ?? false)
         }
 
         #expect(await delegate.error == nil)
@@ -91,8 +91,8 @@ struct HistoryTests {
             try #require(all.count == 2)
             #expect(all[0].value == .integer(125))
             #expect(all[1].value == .integer(124))
-            #expect(all[0].timestamp.isVeryClose(to: date.advanced(by: 2)))
-            #expect(all[1].timestamp.isVeryClose(to: date.advanced(by: 1)))
+            #expect(all[0].timestamp?.isVeryClose(to: date.advanced(by: 2)) ?? false)
+            #expect(all[1].timestamp?.isVeryClose(to: date.advanced(by: 1)) ?? false)
         }
 
         #expect(await delegate.error == nil)

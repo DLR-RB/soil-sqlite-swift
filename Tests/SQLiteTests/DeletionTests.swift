@@ -55,13 +55,13 @@ struct DeletionTests {
             #expect(all.samples.count == 1)
             let sample = try #require(all.samples.first)
             #expect(sample.value == .integer(123))
-            #expect(sample.timestamp.isVeryClose(to: now))
+            #expect(sample.timestamp?.isVeryClose(to: now) ?? false)
 
             let child = try #require(all.children["c"])
             #expect(child.samples.count == 1)
             let childSample = try #require(child.samples.first)
             #expect(childSample.value == .integer(124))
-            #expect(childSample.timestamp.isVeryClose(to: now))
+            #expect(childSample.timestamp?.isVeryClose(to: now) ?? false)
         }
 
         // Delete all data at the parent
@@ -77,7 +77,7 @@ struct DeletionTests {
             #expect(child.samples.count == 1)
             let sample = try #require(child.samples.first)
             #expect(sample.value == .integer(124))
-            #expect(sample.timestamp.isVeryClose(to: now))
+            #expect(sample.timestamp?.isVeryClose(to: now) ?? false)
         }
 
         do {
@@ -87,7 +87,7 @@ struct DeletionTests {
             #expect(child.samples.count == 1)
             let sample = try #require(child.samples.first)
             #expect(sample.value == .integer(124))
-            #expect(sample.timestamp.isVeryClose(to: now))
+            #expect(sample.timestamp?.isVeryClose(to: now) ?? false)
         }
         do {
             let error = await delegate.error

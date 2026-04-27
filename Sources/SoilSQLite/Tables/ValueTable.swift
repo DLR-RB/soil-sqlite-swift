@@ -16,7 +16,7 @@ import Soil
 final class ValueTable {
 
     /// The database connection to retrieve and insert values
-    private let database: Connection
+    private let database: SQLite.Connection
 
     /// The definition of the table
     private let table = Table("samples")
@@ -46,7 +46,7 @@ final class ValueTable {
      Create an object to interact with the values table.
      - Parameter paths: The table storing the path to id mappings.
      */
-    init(database: Connection, paths: PathTable) throws {
+    init(database: SQLite.Connection, paths: PathTable) throws {
         self.database = database
 
         /*
@@ -107,7 +107,7 @@ final class ValueTable {
             do {
                 try database.run(upsert,
                     pathId,
-                    sample.timestamp.millisecondsSince1970,
+                    sample.time.millisecondsSince1970,
                     values.type.columnId,
                     values.data,
                     values.integer,
