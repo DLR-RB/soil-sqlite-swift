@@ -116,7 +116,7 @@ public actor SQLiteStorage {
 
         // End the recursion if the depth is reached
         if depth == 0 {
-            return ImmutableSampleTree(samples: samples)
+            return SampleTree(samples: samples)
         }
 
         // Ensure that all children are available to continue the recursion
@@ -127,7 +127,7 @@ public actor SQLiteStorage {
         let children: [PathComponent : SampleTree] = node.children.mapValues { child in
             tree(for: child, from: start, to: end, depth: childDepth, limitPerNode: limitPerNode)
         }
-        return ImmutableSampleTree(samples: samples, children: children)
+        return SampleTree(samples: samples, children: children)
     }
 
     // MARK: Delete
