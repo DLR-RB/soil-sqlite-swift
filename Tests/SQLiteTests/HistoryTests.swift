@@ -13,12 +13,12 @@ struct HistoryTests {
 
         let path = ["a", "b", "c"]
         let date = Date()
-        await storage.receive(.integer(123), for: path, at: date).wait()
-        await storage.receive(.double(124), for: path, at: date.advanced(by: 1)).wait()
-        await storage.receive(.string("125"), for: path, at: date.advanced(by: 2)).wait()
-        await storage.receive(.data("126".data(using: .utf8)!), for: path, at: date.advanced(by: 3)).wait()
-        await storage.receive(.path(["126"]), for: path, at: date.advanced(by: 4)).wait()
-        await storage.receive(.null, for: path, at: date.advanced(by: 5)).wait()
+        await storage.accept(.integer(123), for: path, at: date).wait()
+        await storage.accept(.double(124), for: path, at: date.advanced(by: 1)).wait()
+        await storage.accept(.string("125"), for: path, at: date.advanced(by: 2)).wait()
+        await storage.accept(.data("126".data(using: .utf8)!), for: path, at: date.advanced(by: 3)).wait()
+        await storage.accept(.path(["126"]), for: path, at: date.advanced(by: 4)).wait()
+        await storage.accept(.null, for: path, at: date.advanced(by: 5)).wait()
 
         try await Task.sleep(for: .seconds(0.1))
         #expect(await delegate.error == nil)
@@ -50,10 +50,10 @@ struct HistoryTests {
 
         let path = ["a", "b", "c"]
         let date = Date()
-        await storage.receive(.integer(123), for: path, at: date).wait()
-        await storage.receive(.integer(124), for: path, at: date.advanced(by: 1)).wait()
-        await storage.receive(.integer(125), for: path, at: date.advanced(by: 2)).wait()
-        await storage.receive(.integer(126), for: path, at: date.advanced(by: 3)).wait()
+        await storage.accept(.integer(123), for: path, at: date).wait()
+        await storage.accept(.integer(124), for: path, at: date.advanced(by: 1)).wait()
+        await storage.accept(.integer(125), for: path, at: date.advanced(by: 2)).wait()
+        await storage.accept(.integer(126), for: path, at: date.advanced(by: 3)).wait()
 
         #expect(await delegate.error == nil)
 
@@ -75,10 +75,10 @@ struct HistoryTests {
 
         let path = ["a", "b", "c"]
         let date = Date()
-        await storage.receive(.integer(123), for: path, at: date).wait()
-        await storage.receive(.integer(124), for: path, at: date.advanced(by: 1)).wait()
-        await storage.receive(.integer(125), for: path, at: date.advanced(by: 2)).wait()
-        await storage.receive(.integer(126), for: path, at: date.advanced(by: 3)).wait()
+        await storage.accept(.integer(123), for: path, at: date).wait()
+        await storage.accept(.integer(124), for: path, at: date.advanced(by: 1)).wait()
+        await storage.accept(.integer(125), for: path, at: date.advanced(by: 2)).wait()
+        await storage.accept(.integer(126), for: path, at: date.advanced(by: 3)).wait()
 
         #expect(await delegate.error == nil)
 

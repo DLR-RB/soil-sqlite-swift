@@ -26,23 +26,25 @@ public actor SQLiteStorage {
     /**
      Create or open a SQLite database using a file name.
      - Parameter filePath: The path to the SQLite database file
+     - Parameter encoding: The encoding to use for complex values, defaults to JSON
      - Throws: Errors, if the database could not be connected or if the tables could not be created
      */
-    public init(filePath: String) throws {
+    public init(filePath: String, encoding: any BlobEncoding = JsonEncoding()) throws {
         let database = try SQLite.Connection(filePath)
-        try self.init(database: database)
+        try self.init(database: database, encoding: encoding)
     }
 
     /**
      Create a storage with an existing database connection.
      - Parameter database: The database handle
+     - Parameter encoding: The encoding to use for complex values, defaults to JSON
      - Throws: SQLite errors, if the tables could not be created
      */
-    public init(database: SQLite.Connection) throws {
+    public init(database: SQLite.Connection, encoding: any BlobEncoding = JsonEncoding()) throws {
         self.database = database
         let pathTable = try PathTable(database: database)
         self.paths = PathResolver(table: pathTable)
-        self.values = try ValueTable(database: database, paths: pathTable)
+        self.values = try ValueTable(database: database, paths: pathTable, encoding: encoding)
     }
 
     /**
@@ -116,7 +118,7 @@ public actor SQLiteStorage {
 
         // End the recursion if the depth is reached
         if depth == 0 {
-            return SampleTree(samples: samples)
+            return ImmutableSampleTree(samples: samples)
         }
 
         // Ensure that all children are available to continue the recursion
@@ -127,7 +129,7 @@ public actor SQLiteStorage {
         let children: [PathComponent : SampleTree] = node.children.mapValues { child in
             tree(for: child, from: start, to: end, depth: childDepth, limitPerNode: limitPerNode)
         }
-        return SampleTree(samples: samples, children: children)
+        return ImmutableSampleTree(samples: samples, children: children)
     }
 
     // MARK: Delete
@@ -285,7 +287,7 @@ extension SQLiteStorage: Storage {
        It is always possible to store the same data again to complete the save.
      */
     @discardableResult
-    public nonisolated func receive(_ tree: SampleTree, for path: Path) -> any Request {
+    public nonisolated func accept(_ tree: SampleTree, for path: Path) -> any Request {
         // Call the actor-isolated function in an async task to prevent data races
         AsyncRequest {
             await self.store(tree, for: path)

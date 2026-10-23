@@ -15,6 +15,8 @@ extension ValueType {
         case .double: 3
         case .string: 4
         case .path: 5
+        case .list: 6
+        case .map: 7
         }
     }
 
@@ -29,6 +31,8 @@ extension ValueType {
         case 3: self = .double
         case 4: self = .string
         case 5: self = .path
+        case 6: self = .list
+        case 7: self = .map
         default: return nil
         }
     }

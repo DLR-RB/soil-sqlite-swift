@@ -7,6 +7,45 @@ import SoilSQLite
 @Suite("Storage")
 struct StorageTests {
 
+    func roundTrip(value: Soil.Value) async throws {
+        let (storage, delegate) = try await makeStorageAndDelegate()
+        let pathA = ["a", "b", "c"]
+        let now = Date().addingTimeInterval(-0.1)
+
+        await storage.accept(value, for: pathA, at: now).wait()
+
+        let storedPathA = await storage.currentSample(for: pathA)
+        let sample = try #require(storedPathA)
+        #expect(sample.value == value)
+        #expect(sample.timestamp?.isVeryClose(to: now) ?? false)
+        #expect(await delegate.error == nil)
+    }
+
+    @Test("Path encoding")
+    func testPathValues() async throws {
+        try await roundTrip(value: .path(["a", "b", "c"]))
+    }
+
+    @Test("List encoding")
+    func testListValues() async throws {
+        try await roundTrip(value: .list([
+            .integer(123),
+            .double(3.14),
+            .string("abc"),
+            .data(.init(repeating: 4, count: 42))
+        ]))
+    }
+
+    @Test("Map encoding")
+    func testMapValues() async throws {
+        try await roundTrip(value: .map([
+            "a": .integer(123),
+            "b": .double(3.14),
+            "c": .string("abc"),
+            "d": .data(.init(repeating: 4, count: 42))
+        ]))
+    }
+
     @Test("Current value for path")
     func saveAndGetSamples() async throws {
         let (storage, delegate) = try await makeStorageAndDelegate()
@@ -14,7 +53,7 @@ struct StorageTests {
         let pathA = ["a", "b", "c"]
         let now = Date().addingTimeInterval(-0.1)
 
-        await storage.receive(.integer(123), for: pathA, at: now).wait()
+        await storage.accept(.integer(123), for: pathA, at: now).wait()
 
         let storedPathA = await storage.currentSample(for: pathA)
         let sample = try #require(storedPathA)
@@ -32,9 +71,9 @@ struct StorageTests {
 
         let now = Date()
 
-        await storage.receive(.integer(123), for: ["a", "b", "c"], at: now).wait()
-        await storage.receive(.double(3.14), for: ["a", "b", "d"], at: now).wait()
-        await storage.receive(.string("some"), for: ["a", "e"], at: now).wait()
+        await storage.accept(.integer(123), for: ["a", "b", "c"], at: now).wait()
+        await storage.accept(.double(3.14), for: ["a", "b", "d"], at: now).wait()
+        await storage.accept(.string("some"), for: ["a", "e"], at: now).wait()
 
         do {
             let tree = await storage.currentTree(for: ["a"], depth: nil)
@@ -71,9 +110,9 @@ struct StorageTests {
 
         let now = Date()
 
-        await storage.receive(.integer(123), for: ["a", "b", "c"], at: now).wait()
-        await storage.receive(.double(3.14), for: ["a", "b", "d"], at: now).wait()
-        await storage.receive(.string("some"), for: ["a", "e"], at: now).wait()
+        await storage.accept(.integer(123), for: ["a", "b", "c"], at: now).wait()
+        await storage.accept(.double(3.14), for: ["a", "b", "d"], at: now).wait()
+        await storage.accept(.string("some"), for: ["a", "e"], at: now).wait()
 
         do {
             let tree = await storage.currentTree(for: ["a"], depth: 2)
@@ -132,7 +171,7 @@ struct StorageTests {
         let now = Date()
         let path = ["a", "b", "c"]
 
-        await storage.receive(.integer(123), for: path, at: now).wait()
+        await storage.accept(.integer(123), for: path, at: now).wait()
 
         do {
             let samples = await storage.samples(for: path)
@@ -143,7 +182,7 @@ struct StorageTests {
         }
 
         // Overwrite sample
-        await storage.receive(.integer(42), for: path, at: now).wait()
+        await storage.accept(.integer(42), for: path, at: now).wait()
 
         do {
             let samples = await storage.samples(for: path)
@@ -162,7 +201,7 @@ struct StorageTests {
         let now = Date()
         let path = ["a", "b", "c"]
 
-        await storage.receive(.path(["zz", "abc", "42"]), for: path, at: now).wait()
+        await storage.accept(.path(["zz", "abc", "42"]), for: path, at: now).wait()
 
         try await Task.sleep(for: .seconds(0.1))
 
@@ -187,11 +226,11 @@ struct StorageTests {
         let now = Date()
         let path = ["a", "b", "c"]
 
-        await storage.receive(.integer(1), for: path, at: now.advanced(by: -5)).wait()
-        await storage.receive(.integer(3), for: path, at: now.advanced(by: -3)).wait()
-        await storage.receive(.integer(5), for: path, at: now.advanced(by: -1)).wait() // Latest
-        await storage.receive(.integer(4), for: path, at: now.advanced(by: -2)).wait()
-        await storage.receive(.integer(2), for: path, at: now.advanced(by: -4)).wait()
+        await storage.accept(.integer(1), for: path, at: now.advanced(by: -5)).wait()
+        await storage.accept(.integer(3), for: path, at: now.advanced(by: -3)).wait()
+        await storage.accept(.integer(5), for: path, at: now.advanced(by: -1)).wait() // Latest
+        await storage.accept(.integer(4), for: path, at: now.advanced(by: -2)).wait()
+        await storage.accept(.integer(2), for: path, at: now.advanced(by: -4)).wait()
 
         let possSample = await storage.currentSample(for: path)
         let sample = try #require(possSample)
@@ -207,16 +246,16 @@ struct StorageTests {
         let lastHour = now.addingTimeInterval(-3600)
         let path = ["a", "b", "c"]
 
-        await storage.receive(.integer(1), for: path, at: now.advanced(by: -5)).wait()
-        await storage.receive(.integer(3), for: path, at: now.advanced(by: -3)).wait()
-        await storage.receive(.integer(5), for: path, at: now.advanced(by: -1)).wait() // Latest
-        await storage.receive(.integer(4), for: path, at: now.advanced(by: -2)).wait()
-        await storage.receive(.integer(2), for: path, at: now.advanced(by: -4)).wait()
-        await storage.receive(.integer(11), for: path, at: now.advanced(by: -3605)).wait()
-        await storage.receive(.integer(13), for: path, at: now.advanced(by: -3603)).wait()
-        await storage.receive(.integer(15), for: path, at: now.advanced(by: -3601)).wait()
-        await storage.receive(.integer(14), for: path, at: now.advanced(by: -3602)).wait()
-        await storage.receive(.integer(12), for: path, at: now.advanced(by: -3604)).wait()
+        await storage.accept(.integer(1), for: path, at: now.advanced(by: -5)).wait()
+        await storage.accept(.integer(3), for: path, at: now.advanced(by: -3)).wait()
+        await storage.accept(.integer(5), for: path, at: now.advanced(by: -1)).wait() // Latest
+        await storage.accept(.integer(4), for: path, at: now.advanced(by: -2)).wait()
+        await storage.accept(.integer(2), for: path, at: now.advanced(by: -4)).wait()
+        await storage.accept(.integer(11), for: path, at: now.advanced(by: -3605)).wait()
+        await storage.accept(.integer(13), for: path, at: now.advanced(by: -3603)).wait()
+        await storage.accept(.integer(15), for: path, at: now.advanced(by: -3601)).wait()
+        await storage.accept(.integer(14), for: path, at: now.advanced(by: -3602)).wait()
+        await storage.accept(.integer(12), for: path, at: now.advanced(by: -3604)).wait()
 
         let samples = await storage.samples(for: path, from: lastHour, to: now, limit: nil)
 

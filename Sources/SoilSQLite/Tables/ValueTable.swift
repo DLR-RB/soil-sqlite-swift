@@ -12,6 +12,9 @@ import Soil
  - The stored entries are identified by the `path id` (from the `paths` table) and the timestamp.
  - There is no separate ROW ID, since samples are indexed using `path` and `timestamp`
  - The primary key is a composite of `path` and `timestamp`, to ensure uniqueness of samples, and to speed up queries by path.
+ - Complex values (Lists, Maps, Paths) are encoded as JSON and stored in the `data` column.
+   The encoding consists of a list storing first the value type as an integer, followed by the encoding of the value.
+   See the file `Value+Codable.swift` for more information.
  */
 final class ValueTable {
 
@@ -42,12 +45,18 @@ final class ValueTable {
     /// The column storing TEXT values
     private let string = Expression<String?>("string_value")
 
+    /// The encoding for complex values
+    private let encoding: BlobEncoding
+
     /**
      Create an object to interact with the values table.
+     - Parameter database: The database connection
      - Parameter paths: The table storing the path to id mappings.
+     - Parameter encoding: The encoding to use for complex values, defaults to JSON
      */
-    init(database: SQLite.Connection, paths: PathTable) throws {
+    init(database: SQLite.Connection, paths: PathTable, encoding: any BlobEncoding) throws {
         self.database = database
+        self.encoding = encoding
 
         /*
         CREATE TABLE samples WITHOUT ROW ID (
@@ -103,8 +112,8 @@ final class ValueTable {
             """
         // Save all samples at the current node
         for sample in samples {
-            let values = sample.value.columns
             do {
+                let values = try columns(for: sample.value)
                 try database.run(upsert,
                     pathId,
                     sample.time.millisecondsSince1970,
@@ -185,7 +194,7 @@ final class ValueTable {
 
      If data is corrupted, then `nil` is returned (distinct from a `null` value)
      */
-    private func value(in row: Row, of type: ValueType) throws -> Soil.Value {
+    private func value(in row: Row, of type: ValueType) throws(RowError) -> Soil.Value {
         switch type {
         case .null: return .null
         case .integer:
@@ -200,10 +209,37 @@ final class ValueTable {
         case .data:
             guard let value = row[data] else { throw RowError.missingValue(.data) }
             return .data(value)
-        case .path:
-            guard let raw = row[data] else { throw RowError.missingValue(.path) }
-            guard let path = Path(data: raw) else { throw RowError.invalidPath }
-            return .path(path)
+        default:
+            guard let raw = row[data] else { throw RowError.missingValue(type) }
+            do {
+                return try encoding.decode(Value.self, from: raw)
+            } catch {
+                throw RowError.invalidData(error.localizedDescription)
+            }
+        }
+    }
+
+    /**
+     Convert a value to the column entries of the values table.
+     Integers, Doubles and Strings, Data are put into their respective columns,
+     while other types are encoded into data and also stored in the data column.
+     - Parameter value: The value to convert
+     - Returns: The column entries for the value
+     */
+    private func columns(for value: Soil.Value) throws -> (type: ValueType, integer: Int?, double: Double?, string: String?, data: Blob?) {
+        switch value {
+            case .null: return (.null, nil, nil, nil, nil)
+            case .integer(let value): return (ValueType.integer, value, nil, nil, nil)
+            case .double(let value): return (.double, nil, value, nil, nil)
+            case .string(let value): return (.string, nil, nil, value, nil)
+            case .data(let value): return (.data, nil, nil, nil, value.blob)
+            default:
+                do {
+                    let data = try encoding.encode(value)
+                    return (value.type, nil, nil, nil, data.blob)
+                } catch {
+                    throw RowError.invalidData(error.localizedDescription)
+                }
         }
     }
 
@@ -221,20 +257,5 @@ final class ValueTable {
             .filter(timestamp, from: start, to: end)
             .delete()
         try database.run(query)
-    }
-}
-
-private extension Soil.Value {
-
-    /// All data-specific columns for inserts
-    var columns: (type: ValueType, integer: Int?, double: Double?, string: String?, data: Blob?) {
-        switch self {
-            case .null: return (.null, nil, nil, nil, nil)
-            case .integer(let value): return (ValueType.integer, value, nil, nil, nil)
-            case .double(let value): return (.double, nil, value, nil, nil)
-            case .string(let value): return (.string, nil, nil, value, nil)
-            case .data(let value): return (.data, nil, nil, nil, value.blob)
-            case .path(let path): return (.path, nil, nil, nil, path.blob)
-        }
     }
 }

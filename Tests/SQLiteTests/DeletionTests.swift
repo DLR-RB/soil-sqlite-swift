@@ -16,11 +16,11 @@ struct DeletionTests {
         do {
             let now = Timestamp.current()
 
-            await storage.receive(.integer(123), for: path, at: now.addingTimeInterval(1)).wait()
-            await storage.receive(.integer(124), for: path, at: now.addingTimeInterval(2)).wait()
-            await storage.receive(.integer(125), for: path, at: now.addingTimeInterval(3)).wait()
-            await storage.receive(.integer(126), for: path, at: now.addingTimeInterval(4)).wait()
-            await storage.receive(.integer(127), for: path, at: now.addingTimeInterval(5)).wait()
+            await storage.accept(.integer(123), for: path, at: now.addingTimeInterval(1)).wait()
+            await storage.accept(.integer(124), for: path, at: now.addingTimeInterval(2)).wait()
+            await storage.accept(.integer(125), for: path, at: now.addingTimeInterval(3)).wait()
+            await storage.accept(.integer(126), for: path, at: now.addingTimeInterval(4)).wait()
+            await storage.accept(.integer(127), for: path, at: now.addingTimeInterval(5)).wait()
         }
 
         // Delete all data
@@ -45,8 +45,8 @@ struct DeletionTests {
 
         let now = Timestamp.current()
         do {
-            await storage.receive(.integer(123), for: parentPath, at: now).wait()
-            await storage.receive(.integer(124), for: path, at: now).wait()
+            await storage.accept(.integer(123), for: parentPath, at: now).wait()
+            await storage.accept(.integer(124), for: path, at: now).wait()
         }
 
         // Check that samples are present
@@ -104,7 +104,7 @@ struct DeletionTests {
 
         do {
             for i in 0..<10 {
-                await storage.receive(.integer(i), for: path, at: now.addingTimeInterval(TimeInterval(i))).wait()
+                await storage.accept(.integer(i), for: path, at: now.addingTimeInterval(TimeInterval(i))).wait()
             }
         }
 
