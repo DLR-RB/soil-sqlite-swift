@@ -209,13 +209,25 @@ final class ValueTable {
         case .data:
             guard let value = row[data] else { throw RowError.missingValue(.data) }
             return .data(value)
-        default:
-            guard let raw = row[data] else { throw RowError.missingValue(type) }
-            do {
-                return try encoding.decode(Value.self, from: raw)
-            } catch {
-                throw RowError.invalidData(error.localizedDescription)
-            }
+        case .path:
+            let value: Path = try decode(row)
+            return .path(value)
+        case .list:
+            let value: [Value] = try decode(row)
+            return .list(value)
+        case .map:
+            let value: [String: Value] = try decode(row)
+            return .map(value)
+    }
+
+    private func decode<T: Decodable>(_ row: Row) throws(RowError) -> T {
+        guard let value = row[data] else {
+            throw RowError.missingValue(.data)
+        }
+        do {
+            return try encoding.decode(T.self, from: value)
+        } catch {
+            throw RowError.invalidData(error.localizedDescription)
         }
     }
 
@@ -229,17 +241,22 @@ final class ValueTable {
     private func columns(for value: Soil.Value) throws -> (type: ValueType, integer: Int?, double: Double?, string: String?, data: Blob?) {
         switch value {
             case .null: return (.null, nil, nil, nil, nil)
-            case .integer(let value): return (ValueType.integer, value, nil, nil, nil)
+            case .integer(let value): return (.integer, value, nil, nil, nil)
             case .double(let value): return (.double, nil, value, nil, nil)
             case .string(let value): return (.string, nil, nil, value, nil)
             case .data(let value): return (.data, nil, nil, nil, value.blob)
-            default:
-                do {
-                    let data = try encoding.encode(value)
-                    return (value.type, nil, nil, nil, data.blob)
-                } catch {
-                    throw RowError.invalidData(error.localizedDescription)
-                }
+            case .path(let value): return try encodeAsData(value, type: .path)
+            case .list(let value): return try encodeAsData(value, type: .list)
+            case .map(let value): return try encodeAsData(value, type: .map)
+        }
+    }
+
+    private func encodeAsData<T: Encodable>(_ value: T, type: ValueType) throws -> (type: ValueType, integer: Int?, double: Double?, string: String?, data: Blob?) {
+        do {
+            let data = try encoding.encode(value)
+            return (type, nil, nil, nil, data.blob)
+        } catch {
+            throw RowError.invalidData(error.localizedDescription)
         }
     }
 
