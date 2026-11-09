@@ -213,11 +213,12 @@ final class ValueTable {
             let value: Path = try decode(row)
             return .path(value)
         case .list:
-            let value: [Value] = try decode(row)
+            let value: [Soil.Value] = try decode(row)
             return .list(value)
         case .map:
-            let value: [String: Value] = try decode(row)
+            let value: [String: Soil.Value] = try decode(row)
             return .map(value)
+        }
     }
 
     private func decode<T: Decodable>(_ row: Row) throws(RowError) -> T {
