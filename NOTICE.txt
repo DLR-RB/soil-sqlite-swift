@@ -1,0 +1,5 @@
+SOIL SQLite Implementation in Swift (soil-sqlite-swift)
+Copyright 2026 DLR - Deutsches Zentrum für Luft- und Raumfahrt e.V.
+
+This product includes software developed at DLR - GSOC (German Space
+Operations Center at the German Aerospace Center DLR, https://www.dlr.de/).
