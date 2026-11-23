@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-toolchain-sqlite.git", from: "1.0.7"),
         .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.17.0", traits: ["SQLiteSwiftCSQLite"]),
         .package(url: "https://github.com/christophhagen/BinaryCodable.git", from: "4.0.0"),
-        .package(url: "https://gitlab.gsoc.dlr.de/gitlab/rb/mit/mcs/luna/soil/soil-core-swift.git", branch: "main"),
+        .package(url: "https://github.com/DLR-RB/soil-core-swift.git", branch: "main"),
     ],
     targets: [
         .target(

@@ -1,6 +1,6 @@
 # SQLite storage for SOIL
 
-This repository contains a SQLite database that implements data storage for [SOIL](https://gitlab.gsoc.dlr.de/gitlab/rb/mit/mcs/luna/soil/soil-documentation).
+This repository contains a SQLite database that implements data storage for [SOIL](https://github.com/DLR-RB/soil-swift-core).
 
 The main class `SQLiteStorage` implements the `Soil.Storage` protocol and can be used to store and retrieve arbitrary information.
 
